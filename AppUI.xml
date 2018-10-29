@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:id="@+id/LinearLayout1"
+    android:background="#aec4e8"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/ROW1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:layout_marginLeft="22dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/MainHeatImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:layout_marginLeft="21dp"
+            android:src="@drawable/loading" />
+
+        <TextView
+            android:id="@+id/MainTempText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textStyle="bold"
+            android:layout_marginLeft="12dp"
+            android:text="Living Room: 00 Degrees" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ROW2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="22dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/mainhumid"
+            android:layout_gravity="center"
+            android:text="Living Room: 00% Humidity"
+            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:layout_height="wrap_content" />
+
+        <ImageView
+            android:id="@+id/LightImage"
+            android:clickable="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginLeft="20dp"
+            android:src="@drawable/loading" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ROW3"
+        android:layout_width="match_parent"
+        android:layout_marginLeft="22dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/BedHeatImage"
+            android:clickable="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginLeft="25dp"
+            android:src="@drawable/loading" />
+
+        <TextView
+            android:id="@+id/bedtemp"
+            android:layout_gravity="center"
+            android:text="Bedroom: 00 Degrees"
+            android:layout_marginLeft="20dp"
+            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="22dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/bedhumid"
+            android:layout_gravity="center"
+            android:text="Bedroom: 00% Humidity"
+            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:layout_marginLeft="20dp"
+            android:textStyle="bold"
+            android:layout_height="wrap_content" />
+
+        <ImageView
+            android:id="@+id/BlanketImage"
+            android:clickable="true"
+            android:layout_marginLeft="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:src="@drawable/loading" />
+    </LinearLayout>
+
+</LinearLayout>
