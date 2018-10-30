@@ -1,77 +1,120 @@
-#!/usr/bin/python
+##!/usr/bin/python
 import socket
 import time
 import _thread
 import datetime
+import Adafruit_DHT
 
-
-PhoneA = "192.168.1.6"
-PhoneB = "192.168.1.46"
+Conor = "192.168.1.6"
+Jason = "192.168.1.46"
 Port = 9999
 
-MainHeat = '0'
-BedHeat = '0'
-Blanket = '0'
+MainHeatStatus = 0
+BedHeatStatus = 0
+BlanketStatus = 0
+LightStatus = 0
+MainTemp = 0
+MainHumid = 0
+BedTemp = 0
+BedHumid = 0
+       
+def listen():
 
-print ("Starting..............")
-
-def broadcast ():
-    global BedHeat
-    global MainHeat
-    global Blanket
-    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    
-    while True:       
-        Status = MainHeat +  ',' + BedHeat + ',' +Blanket
-        server.sendto(str(Status).encode(),(PhoneA, Port))
-        server.sendto(str(Status).encode(),(PhoneB, Port))       
-        time.sleep(0.2)
-        
-def subscribe():
-    
-    global BedHeat
-    global MainHeat
-    global Blanket
     server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server.bind(("0.0.0.0",9998))
     
-    while True:       
+    while True:
+        
         data = repr(server.recvfrom(5))
         if data[3] == '1':
             togglemain()
         if data[3] == '2':
             togglebed()
         if data[3] == '3':
-            toggleblanket()           
-               
-_thread.start_new_thread(broadcast,())
-_thread.start_new_thread(subscribe, ())
+            toggleblanket()
+        if data[3] == '4':
+            togglelight()           
+        update()
+        
+def getmain():
+    
+    global MainTemp
+    global MainHumid
+    
+    while True:
+        
+        sensor = Adafruit_DHT.DHT11
+        pin = 17
+        h, t = Adafruit_DHT.read_retry(sensor, pin)
+        temp = int(t)
+        humid = int(h)
+        
+        if humid >= 0 & humid < 100:
+            
+            MainHumid = humid
+            update()
+                      
+        if temp >= 0 & temp < 100:
+           
+            MainTemp = temp
+            update()
+           
+_thread.start_new_thread(listen, ())
+_thread.start_new_thread(getmain, ())
 print ("Online at",datetime.datetime.now().strftime("%I:%M:%S %p"))
 
-def togglemain():   
-    global MainHeat
-    if MainHeat == '1':
-        MainHeat = '0'
+def update():
+    
+    global BedHeatStatus
+    global MainHeatStatus
+    global BlanketStatus
+    global LightStatus
+    global MainTemp 
+    global MainHumid
+    global BedTemp
+    global BedHumid
+    
+    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)      
+    Status = str(MainHeatStatus) +  ',' + str(BedHeatStatus) + ',' + str(BlanketStatus) + ',' + str(LightStatus) + ',' + str(MainTemp).zfill(2) + ',' + str(MainHumid).zfill(2)  + ',' + str(BedTemp).zfill(2)  + ',' + str(BedHumid).zfill(2) 
+    server.sendto(Status.encode(),(Conor, Port))
+    server.sendto(Status.encode(),(Jason, Port))
+
+def togglemain():
+    
+    global MainHeatStatus
+    if MainHeatStatus == 1:
+        MainHeatStatus = 0
         print("Switched off Living room heater at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-    elif MainHeat == '0':
-        MainHeat = '1'
+    elif MainHeatStatus == 0:
+        MainHeatStatus = 1
         print("Switched on Living room heater at",datetime.datetime.now().strftime("%I:%M:%S %p"))
         
-def togglebed():  
-    global BedHeat
-    if BedHeat == '1':
-        BedHeat = '0'
+def togglebed(): 
+    
+    global BedHeatStatus
+    if BedHeatStatus == 1:
+        BedHeatStatus = 0
         print("Switched off Bedroom heater at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-    elif BedHeat == '0':
-        BedHeat = '1'
+    elif BedHeatStatus == 0:
+        BedHeatStatus = 1
         print("Switched on Bedroom heater at",datetime.datetime.now().strftime("%I:%M:%S %p"))
         
-def toggleblanket(): 
-    global Blanket
-    if Blanket == '1':
-        Blanket = '0'
+def toggleblanket():
+    
+    global BlanketStatus
+    if BlanketStatus == 1:
+        BlanketStatus = 0
         print("Switched off the Electric blanket at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-    elif Blanket == '0':
-        Blanket = '1'
+    elif BlanketStatus == 0:
+        BlanketStatus = 1
         print("Switched on the Electric blanket at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-
+        
+def togglelight():
+    
+    global LightStatus
+    if LightStatus == 1:
+        LightStatus = 0
+        print("Switched off the Lamp at",datetime.datetime.now().strftime("%I:%M:%S %p"))
+    elif LightStatus == 0:
+        LightStatus = 1
+        print("Switched on the Lamp at",datetime.datetime.now().strftime("%I:%M:%S %p"))
