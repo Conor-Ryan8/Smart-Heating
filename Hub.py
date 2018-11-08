@@ -4,11 +4,12 @@ import time
 import _thread
 import datetime
 import Adafruit_DHT
+from rpi_rf import RFDevice
 
 #connection data
 Server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)      
-Conor = "192.168.1.6"
-Jason = "192.168.1.46"
+Conor = "192.168.0.129"
+Jason = "192.168.0.45"
 
 #devices and values
 MainHeatStatus = 0
@@ -19,6 +20,30 @@ MainTemp = 0
 MainHumid = 0
 BedTemp = 0
 BedHumid = 0
+
+def radio():
+    
+    global LightStatus
+    
+    Radio = RFDevice(17)
+    Radio.enable_tx()
+
+    LightON = 5330227
+    LightOFF = 5330236
+    
+    PIN = 189
+    
+    while True:
+        
+        if LightStatus == 0:
+            
+            Radio.tx_code(LightOFF, 1, PIN)
+        
+        elif LightStatus == 1:
+            
+            Radio.tx_code(LightON, 1, PIN)
+        
+        time.sleep(1)
 
 def listen():
 
@@ -55,7 +80,7 @@ def getMainSensor():
     while True:
         
         #attempt to get data from the sensor module
-        h, t = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11,17)
+        h, t = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11,27)
         #convert to integers
         temp = int(t)
         humid = int(h)
@@ -82,13 +107,16 @@ def getMainSensor():
             #print status message indicating an update
             print("Living Room is " + str(temp) + " °C")
             update()
+            
+            time.sleep(60)
 
 #start listening and sensor threads
+_thread.start_new_thread(radio, ())
 _thread.start_new_thread(listen, ())
 _thread.start_new_thread(getMainSensor, ())
 #startup complete status message
 print ("Online at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-
+     
 def update():
     
     global BedHeatStatus
@@ -100,10 +128,7 @@ def update():
     global BedTemp
     global BedHumid
     
-    #format a string containing all data, seperated by ,
     Status = str(MainHeatStatus) +  ',' + str(BedHeatStatus) + ',' + str(BlanketStatus) + ',' + str(LightStatus) + ',' + str(MainTemp).zfill(2) + ',' + str(MainHumid).zfill(2)  + ',' + str(BedTemp).zfill(2)  + ',' + str(BedHumid).zfill(2) 
-    
-    #Send to both devices
     Server.sendto(Status.encode(),(Conor,9999))
     Server.sendto(Status.encode(),(Jason,9999))
 
@@ -141,78 +166,7 @@ def toggleblanket():
 def togglelight():
     
     global LightStatus
-    if LightStatus == 1:
-        LightStatus = 0
-        print("Switched off the Lamp at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-    elif LightStatus == 0:
-        LightStatus = 1
-        print("Switched on the Lamp at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-
-
-        
-        if humid >= 0 & humid < 100:
-            
-            MainHumid = humid
-            update()
-                      
-        if temp >= 0 & temp < 100:
-           
-            MainTemp = temp
-            update()
-           
-_thread.start_new_thread(listen, ())
-_thread.start_new_thread(getmain, ())
-print ("Online at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-
-def update():
     
-    global BedHeatStatus
-    global MainHeatStatus
-    global BlanketStatus
-    global LightStatus
-    global MainTemp 
-    global MainHumid
-    global BedTemp
-    global BedHumid
-    
-    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)      
-    Status = str(MainHeatStatus) +  ',' + str(BedHeatStatus) + ',' + str(BlanketStatus) + ',' + str(LightStatus) + ',' + str(MainTemp).zfill(2) + ',' + str(MainHumid).zfill(2)  + ',' + str(BedTemp).zfill(2)  + ',' + str(BedHumid).zfill(2) 
-    server.sendto(Status.encode(),(Conor, Port))
-    server.sendto(Status.encode(),(Jason, Port))
-
-def togglemain():
-    
-    global MainHeatStatus
-    if MainHeatStatus == 1:
-        MainHeatStatus = 0
-        print("Switched off Living room heater at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-    elif MainHeatStatus == 0:
-        MainHeatStatus = 1
-        print("Switched on Living room heater at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-        
-def togglebed(): 
-    
-    global BedHeatStatus
-    if BedHeatStatus == 1:
-        BedHeatStatus = 0
-        print("Switched off Bedroom heater at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-    elif BedHeatStatus == 0:
-        BedHeatStatus = 1
-        print("Switched on Bedroom heater at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-        
-def toggleblanket():
-    
-    global BlanketStatus
-    if BlanketStatus == 1:
-        BlanketStatus = 0
-        print("Switched off the Electric blanket at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-    elif BlanketStatus == 0:
-        BlanketStatus = 1
-        print("Switched on the Electric blanket at",datetime.datetime.now().strftime("%I:%M:%S %p"))
-        
-def togglelight():
-    
-    global LightStatus
     if LightStatus == 1:
         LightStatus = 0
         print("Switched off the Lamp at",datetime.datetime.now().strftime("%I:%M:%S %p"))
