@@ -5,19 +5,19 @@ import datetime
 import Adafruit_DHT
 from rpi_rf import RFDevice
 
-AWS = '34.245.213.25'
-
-Temp = 0
-Humid = 0
+Heater = 0
+Blanket = 0
+Temp = 00
+Humid = 00
 IdealTemp = 20
+
+AWS = '34.245.213.25'
 
 def getTemp():
     
     global Temp
     global Humid
-    
-    Server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    
+	
     #temp values for tracking updates
     CurrentTemp = Temp
     CurrentHumid = Humid
@@ -37,9 +37,8 @@ def getTemp():
             
             #update relevent values
             Humid = h
-            CurrentHumid = h          
-            print("Humidity at " + str(h) + "%")
-       
+            CurrentHumid = h
+
         #checks if temp is between 0 and 99 for the first reading taken.
         #for every other reading check if the value is also between 0 and 99, check if the value has changed, and had not fluctuated more than 25% indicating a sensor error
         if t >= 0 and t < 100 and t != CurrentTemp and CurrentTemp == 0 or t >= 0 and t < 100 and t != CurrentTemp and t < CurrentTemp*1.25 and t > CurrentTemp*0.75:
@@ -47,67 +46,69 @@ def getTemp():
             #update relevent values 
             Temp = t
             CurrentTemp = t
-            print("Temperature is " + str(t) + " °C")
             
+        time.sleep(5)
             
-        send = '5,'+ str(Temp) + ',' + str(Humid)
-        Server.sendto(send.encode(),(AWS,9998))           
-        time.sleep(10)
-        
-        
 def deviceControl():
-    
+
+    global Heater
+    global Blanket
+
     HeaterON = 5330371
     HeaterOFF = 5330380
     BlanketON = 5330691
     BlanketOFF = 5330700
-    
-    Server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)        
-    Server.bind(("0.0.0.0",9999))
-    Radio = RFDevice(17)
-    PIN = 189
-    send = '9'
-    
-    while True:
-    
-        Server.sendto(send.encode(),(AWS,9998))
-        Server.settimeout(1)
-        
-        try:
-            
-            data = repr(Server.recvfrom(19))
-    
-        except Server.Timeouterror:
-            
-            break        
 
-        a,HeaterStatus,BlanketStatus,b,c,d,e,f,g,h = data.split(",")
-                   
+    Radio = RFDevice(17)
+    
+
+    while True:
+        
         Radio.enable_tx()
-        
-        if HeaterStatus.startswith('0') or Temp > IdealTemp:            
-            
+        PIN = 189
+
+        if Heater == '0' or Temp > IdealTemp:
+
             Radio.tx_code(HeaterOFF, 1, PIN)
-            print('Radio: Heater OFF sent')
+            print('Sent - HeaterOFF')
             
-        elif HeaterStatus.startswith('1') and Temp <= IdealTemp:           
-                
+        elif Heater == '1' and Temp <= IdealTemp:
+
             Radio.tx_code(HeaterON, 1, PIN)
-            print('Radio: Heater ON sent')
+            print('Sent - HeaterON')
             
-        time.sleep(3)
-            
-        if BlanketStatus.startswith('0'):        
-                
+        time.sleep(2)
+
+        if Blanket == '0':
             Radio.tx_code(BlanketOFF, 1, PIN)
-            print('Radio: Blanket OFF sent')
-                
-        elif BlanketStatus.startswith('1'):            
-                
+            print('Sent - BlanketOFF')
+
+        elif Blanket == '1':
+
             Radio.tx_code(BlanketON, 1, PIN)
-            print('Radio: Blanket ON sent')
-        
-        time.sleep(3)
+            print('Sent - BlanketON')
+
+        time.sleep(2)
+
+def sync():
+
+    global Temp
+    global Humid
+    global Heater
+    global Blanket
+
+    Send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    while True:
+
+        data = '5,' + str(Temp) + ',' + str(Humid)
+        Send.sendto(data.encode(),(AWS,9998))
+        time.sleep(1)
+        data = repr(Send.recvfrom(19))
+        a,Heater,Blanket,b,c,d,e,f,g,h = data.split(",")
+        print('Sync complete! Heater: ' +Heater+' Blanket: '+Blanket+'  Temperature: '+str(Temp)+'Degrees  Humidity: '+str(Humid)+'%')
+        time.sleep(1)
         
 _thread.start_new_thread(getTemp,())
 _thread.start_new_thread(deviceControl,())
+_thread.start_new_thread(sync,())
