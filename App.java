@@ -20,12 +20,12 @@ public class MainActivity extends AppCompatActivity
     public static int BedHeatStatus;
     public static int MainHeatStatus;
     public static int BlanketStatus;
-    public static int LightStatus = 0;
+    public static int LightStatus;
     public static int Loop = 1;
     public static int MainTempValue;
     public static int MainHumidValue;
-    public static int BedTempValue = 0;
-    public static int BedHumidValue = 0;
+    public static int BedTempValue;
+    public static int BedHumidValue;
 
     ImageView MainImageView;
     ImageView BedImageView;
@@ -87,30 +87,71 @@ public class MainActivity extends AppCompatActivity
                 clicked("4");
             }
         });
-        Thread Subscribe = new Thread( new Runnable()
+        Thread getData = new Thread( new Runnable()
         {
             byte[] receive = new byte[19];
             DatagramSocket socket;
             DatagramPacket packet;
+            InetAddress address;
+            {
+                try
+                {
+                    address = InetAddress.getByName("34.245.213.25");
+                    Log.d("TESTLOG1","Address Found");
+                }
+                catch (UnknownHostException e)
+                {
+                    Log.d("TESTLOG1","Finding Address Failed!");
+                }
+            }
             @SuppressWarnings("unused")
             @Override
             public void run()
             {
+                byte[] temp;
+                String send = "9";
+
                 try
                 {
-                    Log.d("TESTLOG","Attempting to Bind on port 9999");
-                    socket = new DatagramSocket(9999);
-                    Log.d("TESTLOG","Listening on port 9999");
+                    Log.d("TESTLOG1","Attempting to Create Socket");
+                    socket = new DatagramSocket();
+                    Log.d("TESTLOG1","Socket Created");
                 }
                 catch (SocketException e)
                 {
-                    Log.d("TESTLOG","Binding Failed!");
+                    Log.d("TESTLOG1","Socket Create Failed!");
                 }
-                packet = new DatagramPacket(receive, 19);
-                Log.d("TESTLOG", "Attempting to get data!");
+                try
+                {
+                    Log.d("TESTLOG1","Attempting to Bind on port 9999");
+                    socket = new DatagramSocket(9999);
+                    Log.d("TESTLOG1","Listening on port 9999");
+                }
+                catch (SocketException e)
+                {
+                    Log.d("TESTLOG1","Binding Failed!");
+                }
+
+                temp = send.getBytes();
+
 
                 while (Loop == 1)
                 {
+                    packet = new DatagramPacket(temp, temp.length, address, 9998);
+                    try
+                    {
+                        socket.setSoTimeout(1000);
+                        socket.send(packet);
+                        Log.d("TESTLOG1","Sent:"+ send);
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                        Log.d("TESTLOG1","Send Failed!");
+                    }
+
+                    packet = new DatagramPacket(receive, 19);
+
                     if (socket != null)
                     {
                         try
@@ -121,21 +162,22 @@ public class MainActivity extends AppCompatActivity
                         {
                             Log.d("TESTLOG", "Receive Failed :(");
                         }
+
                         String data = new String(packet.getData());
                         Log.d("TESTLOG", "Received: " + data);
                         String[] parts = data.split(",");
                         MainHeatStatus = Integer.parseInt(parts[0]);
                         BedHeatStatus = Integer.parseInt(parts[1]);
                         BlanketStatus = Integer.parseInt(parts[2]);
-                        MainTempValue = Integer.parseInt(parts[3]);
-                        MainHumidValue = Integer.parseInt(parts[4]);
-                        BedTempValue = Integer.parseInt(parts[5]);
-                        BedHumidValue = Integer.parseInt(parts[6]);
-                        LightStatus = Integer.parseInt(parts[7]);
+                        LightStatus = Integer.parseInt(parts[3]);
+                        MainTempValue = Integer.parseInt(parts[4]);
+                        MainHumidValue = Integer.parseInt(parts[5]);
+                        BedTempValue = Integer.parseInt(parts[6]);
+                        BedHumidValue = Integer.parseInt(parts[7]);
                     }
                     try
                     {
-                        Thread.sleep(100);
+                        Thread.sleep(1000);
                     }
                     catch (InterruptedException e)
                     {
@@ -144,6 +186,7 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+
         Thread Graphics = new Thread( new Runnable()
         {
             int DisplayedMainHeatStatus = MainHeatStatus;
@@ -265,11 +308,19 @@ public class MainActivity extends AppCompatActivity
                         DisplayedLightStatus = LightStatus;
                         Log.d("TESTLOG","Updated Light Graphic!");
                     }
+                    try
+                    {
+                        Thread.sleep(250);
+                    }
+                    catch (InterruptedException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
 
-        Subscribe.start();
+        getData.start();
         Graphics.start();
         updateMain();
         updateBed();
@@ -367,7 +418,7 @@ public class MainActivity extends AppCompatActivity
             {
                 try
                 {
-                    address = InetAddress.getByName("192.168.1.3");
+                    address = InetAddress.getByName("34.245.213.25");
                     Log.d("TESTLOG","Address Found");
                 }
                 catch (UnknownHostException e)
